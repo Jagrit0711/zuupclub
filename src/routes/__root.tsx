@@ -7,11 +7,31 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHost } from "@tanstack/react-start/server";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "sonner";
+import { ClubPublicPortal } from "../components/club-portal";
+
+const getTenantSlug = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const host = getRequestHost();
+    if (!host) return null;
+    if (host.includes(".club.zuup.dev")) {
+      return host.split(".")[0];
+    }
+    // Local testing: byte.localhost:5173
+    if (host.includes(".localhost")) {
+      return host.split(".")[0];
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+});
 
 function NotFoundComponent() {
   return (
@@ -94,6 +114,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" },
     ],
   }),
+  beforeLoad: async () => {
+    const tenantSlug = await getTenantSlug();
+    return { tenantSlug };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -115,12 +139,16 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, tenantSlug } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {tenantSlug ? (
+        <ClubPublicPortal slug={tenantSlug} />
+      ) : (
+        /* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */
+        <Outlet />
+      )}
       <Toaster theme="dark" position="top-center" richColors />
     </QueryClientProvider>
   );
