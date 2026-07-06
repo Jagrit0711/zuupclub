@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  notFound,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHost } from "@tanstack/react-start/server";
@@ -20,13 +21,32 @@ const getTenantSlug = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const host = getRequestHost();
     if (!host) return null;
+    
+    let slug = null;
     if (host.includes(".club.zuup.dev")) {
-      return host.split(".")[0];
+      slug = host.split(".")[0];
     }
     // Local testing: byte.localhost:5173
-    if (host.includes(".localhost")) {
-      return host.split(".")[0];
+    else if (host.includes(".localhost")) {
+      slug = host.split(".")[0];
     }
+    
+    if (slug) {
+      // Lazy import supabase so it works properly in server functions without global errors
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("clubs")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+        
+      if (data) {
+        return slug;
+      } else {
+        return "NOT_FOUND";
+      }
+    }
+    
     return null;
   } catch (err) {
     return null;
@@ -116,6 +136,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   beforeLoad: async () => {
     const tenantSlug = await getTenantSlug();
+    if (tenantSlug === "NOT_FOUND") {
+      throw notFound();
+    }
     return { tenantSlug };
   },
   shellComponent: RootShell,

@@ -21,11 +21,18 @@ function AuthPage() {
   const { next } = useSearch({ from: "/auth" });
 
   useEffect(() => {
+    // If a next URL was provided (e.g., to return to a subdomain), store it securely
+    if (next) {
+      document.cookie = `auth_next_url=${encodeURIComponent(next)}; domain=.zuup.dev; path=/; max-age=3600; secure; samesite=lax`;
+      // Also store it for localhost testing
+      document.cookie = `auth_next_url_local=${encodeURIComponent(next)}; path=/; max-age=3600; samesite=lax`;
+    }
+
     // Redirect to the centralized Zuup Auth gateway
     const callbackUri = encodeURIComponent(`${window.location.origin}/callback`);
     // Passing both redirect_uri and redirect_to to ensure the Gateway catches it.
     window.location.href = `https://auth.zuup.dev/login?client_id=zuupclubs&redirect_uri=${callbackUri}&redirect_to=${callbackUri}`;
-  }, []);
+  }, [next]);
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden flex flex-col">

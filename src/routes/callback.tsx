@@ -27,7 +27,26 @@ function CallbackPage() {
         if (sessionError) throw sessionError;
 
         toast.success("Successfully signed in via Zuup!");
-        nav({ to: "/dashboard", replace: true });
+        
+        // Check for redirect cookie
+        const cookies = document.cookie.split(';');
+        let nextUrl = "/dashboard";
+        for (const cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === "auth_next_url" || name === "auth_next_url_local") {
+            nextUrl = decodeURIComponent(value);
+            // Clear the cookie
+            document.cookie = `${name}=; max-age=0; path=/; domain=.zuup.dev;`;
+            document.cookie = `${name}=; max-age=0; path=/;`;
+            break;
+          }
+        }
+
+        if (nextUrl.startsWith("http")) {
+          window.location.href = nextUrl;
+        } else {
+          nav({ to: nextUrl, replace: true });
+        }
         return;
       }
 
@@ -70,7 +89,26 @@ function CallbackPage() {
         if (sessionError) throw sessionError;
 
         toast.success("Successfully signed in via Zuup!");
-        nav({ to: "/dashboard", replace: true });
+        
+        // Check for redirect cookie
+        const cookies = document.cookie.split(';');
+        let nextUrl = "/dashboard";
+        for (const cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === "auth_next_url" || name === "auth_next_url_local") {
+            nextUrl = decodeURIComponent(value);
+            // Clear the cookie
+            document.cookie = `${name}=; max-age=0; path=/; domain=.zuup.dev;`;
+            document.cookie = `${name}=; max-age=0; path=/;`;
+            break;
+          }
+        }
+
+        if (nextUrl.startsWith("http")) {
+          window.location.href = nextUrl;
+        } else {
+          nav({ to: nextUrl, replace: true });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong during sign-in.");
       }
