@@ -23,10 +23,12 @@ export type Database = {
           full_name: string
           grade: string | null
           id: string
+          join_code: string | null
           leader_id: string
           phone: string | null
           proposed_name: string
           school: string
+          slug: string | null
           status: Database["public"]["Enums"]["club_status"]
           teacher_approved: boolean
           teacher_name: string | null
@@ -41,10 +43,12 @@ export type Database = {
           full_name: string
           grade?: string | null
           id?: string
+          join_code?: string | null
           leader_id: string
           phone?: string | null
           proposed_name: string
           school: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["club_status"]
           teacher_approved?: boolean
           teacher_name?: string | null
@@ -59,10 +63,12 @@ export type Database = {
           full_name?: string
           grade?: string | null
           id?: string
+          join_code?: string | null
           leader_id?: string
           phone?: string | null
           proposed_name?: string
           school?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["club_status"]
           teacher_approved?: boolean
           teacher_name?: string | null

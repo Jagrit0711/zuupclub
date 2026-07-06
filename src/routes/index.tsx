@@ -29,6 +29,8 @@ function LandingPage() {
 
 /* ------------------------------- Hero ------------------------------- */
 function Hero() {
+  const [showSchoolPop, setShowSchoolPop] = useState(false);
+
   return (
     <section className="relative min-h-[100svh] flex flex-col items-center justify-center px-6 pt-32 pb-16 overflow-hidden">
       {/* colored glow blobs */}
@@ -43,7 +45,7 @@ function Hero() {
           aria-hidden
           className="absolute top-24 sm:top-32 right-4 sm:right-8 lg:right-16 hidden sm:flex rotate-[8deg] animate-float-slow"
         >
-          <div className="bg-zuup-pink text-white border-[3px] border-butter px-5 py-2 rounded-full shadow-[0_0_40px_-5px_#FF3D7F] font-display text-lg sm:text-xl">
+          <div className="bg-zuup-pink text-white px-5 py-2 rounded-full shadow-[0_0_40px_-5px_#FF3D7F] font-display text-lg sm:text-xl">
             it's free ✿
           </div>
         </div>
@@ -108,7 +110,7 @@ function Hero() {
       >
         <Link
           to="/apply"
-          className="group h-14 px-8 rounded-full bg-lime text-black text-[15px] font-semibold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-[0_10px_40px_-8px_rgba(223,255,62,0.4)]"
+          className="group h-14 px-8 rounded-full bg-lime text-black text-[15px] font-semibold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-[0_10px_40px_-8px_rgba(255,61,127,0.4)]"
         >
           Apply to start a club
           <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
@@ -122,8 +124,82 @@ function Hero() {
       </div>
 
       <div
-        className="relative z-10 mt-14 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-dim animate-soft-rise"
+        className="relative z-20 mt-12 animate-soft-rise"
         style={{ animationDelay: "0.9s" }}
+      >
+        <div className="relative flex justify-center">
+          <button
+            onClick={() => setShowSchoolPop(p => !p)}
+            className="text-[13px] text-ink-dim hover:text-ink underline underline-offset-4 transition-colors"
+          >
+            I am a school?
+          </button>
+
+          {showSchoolPop && (
+            <div
+              className="absolute bottom-full mb-3 w-[320px] rounded-2xl border border-white/15 bg-black/90 backdrop-blur-xl shadow-2xl p-5 z-50 text-left"
+            >
+              <button
+                onClick={() => setShowSchoolPop(false)}
+                className="absolute top-3 right-3 text-ink-dim hover:text-ink text-xs p-1"
+                aria-label="Close"
+              >✕</button>
+              <p className="text-ink font-semibold text-sm mb-1">Bring Zuup to your school</p>
+              <p className="text-ink-dim text-xs mb-4 leading-relaxed">
+                Empower your students with our free curriculum. Send a pre-filled email to get things started.
+              </p>
+              <div className="space-y-2">
+                <a
+                  href={`mailto:?subject=${encodeURIComponent("Proposal: Establishing a Zuup Tech Innovation Club at our school")}&body=${encodeURIComponent(
+`Greetings [Student Name],
+
+I was recently looking into youth technology initiatives and stumbled upon Zuup Clubs (clubs.zuup.dev). 
+
+It is a completely free initiative backed by Zuup (zuup.dev), an international youth empowerment platform currently supporting over 11,000 active builders. The programme provides schools with a structured curriculum, a dedicated club website, verifiable digital credentials, and access to international hackathons. Crucially, the club is designed to be entirely student-led.
+
+I genuinely like this idea and believe it would offer immense practical benefits to our student body, while simultaneously reflecting very well on our school's reputation for fostering innovation. 
+
+Please take some time to review the platform. If you are interested, I would like you to apply to establish and lead this club at our school. Once you submit the application, I will gladly step in to serve as your official faculty sponsor.
+
+Best regards,
+[Your Name]
+[Your Title]`
+                  )}`}
+                  onClick={() => setShowSchoolPop(false)}
+                  className="w-full h-10 rounded-full border border-white/15 hover:bg-white/5 text-ink text-xs font-medium transition-colors flex items-center justify-center"
+                >
+                  Email a student
+                </a>
+                <a
+                  href={`mailto:?subject=${encodeURIComponent("Proposal: Establishing a Zuup Tech Innovation Club at our school")}&body=${encodeURIComponent(
+`Greetings [Teacher Name],
+
+I was recently looking into youth technology initiatives and stumbled upon Zuup Clubs (clubs.zuup.dev). 
+
+It is a completely free initiative backed by Zuup (zuup.dev), an international youth empowerment platform currently supporting over 11,000 active builders. The programme provides schools with a structured curriculum, a dedicated club website, verifiable digital credentials, and access to international hackathons. Crucially, the club is designed to be entirely student-led, placing no administrative burden on the faculty.
+
+I genuinely like this idea and believe it would offer immense practical benefits to our student body, while simultaneously reflecting very well on our school's reputation for fostering innovation. 
+
+Please take some time to review the platform. I would like you to identify a promising student to apply and lead this initiative. Once they submit their application, I will formally authorise the club's establishment at our school.
+
+Best regards,
+[Your Name]
+[Your Title]`
+                  )}`}
+                  onClick={() => setShowSchoolPop(false)}
+                  className="w-full h-10 rounded-full bg-lime text-black text-xs font-semibold flex items-center justify-center hover:scale-[1.02] transition-transform"
+                >
+                  Email a teacher incharge
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="relative z-10 mt-14 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-dim animate-soft-rise"
+        style={{ animationDelay: "1.1s" }}
       >
         <span className="size-1.5 rounded-full bg-lime animate-shimmer" />
         3,249 shipped a project last month at zuup
@@ -666,7 +742,7 @@ function FinalCTA() {
         <div className="mt-12 flex flex-col sm:flex-row justify-center gap-3">
           <Link
             to="/apply"
-            className="h-14 px-8 rounded-full bg-lime text-black text-[15px] font-semibold flex items-center justify-center gap-2 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-[0_10px_40px_-8px_rgba(223,255,62,0.4)]"
+            className="h-14 px-8 rounded-full bg-lime text-black text-[15px] font-semibold flex items-center justify-center gap-2 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-[0_10px_40px_-8px_rgba(255,61,127,0.4)]"
           >
             Apply to start a club →
           </Link>

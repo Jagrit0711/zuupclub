@@ -19,15 +19,11 @@ export const Route = createFileRoute("/apply")({
 });
 
 const schema = z.object({
-  full_name: z.string().trim().min(1).max(120),
-  email: z.string().trim().email().max(200),
-  phone: z.string().trim().max(40).optional().or(z.literal("")),
   school: z.string().trim().min(1).max(200),
   city: z.string().trim().min(1).max(120),
   grade: z.string().trim().max(60).optional().or(z.literal("")),
   proposed_name: z.string().trim().min(1).max(120),
   why: z.string().trim().min(1).max(2000),
-  password: z.string().min(6, "At least 6 characters").max(200),
 });
 
 function ApplyPage() {
@@ -36,11 +32,10 @@ function ApplyPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) {
-      // already signed in — send them to dashboard
-      // but let them apply again if they don't have a club yet — handled server side
+    if (!loading && !user) {
+      nav({ to: "/auth", search: { next: "/apply" } });
     }
-  }, [user, loading]);
+  }, [user, loading, nav]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -53,35 +48,11 @@ function ApplyPage() {
     }
     setBusy(true);
     try {
-      let userId = user?.id;
-      // If not signed in, create account
-      if (!userId) {
-        const { data: signUp, error: signErr } = await supabase.auth.signUp({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          options: {
-            data: { full_name: parsed.data.full_name },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-        if (signErr) throw signErr;
-        userId = signUp.user?.id;
-        if (!signUp.session) {
-          // If email confirmation is required, session may be null. Try sign in.
-          const { data: signIn } = await supabase.auth.signInWithPassword({
-            email: parsed.data.email,
-            password: parsed.data.password,
-          });
-          userId = signIn.user?.id ?? userId;
-        }
-      }
-      if (!userId) throw new Error("Could not create account");
+      const userId = user?.id;
+      if (!userId) throw new Error("You must be logged in to apply.");
 
       const { error: clubErr } = await supabase.from("clubs").insert({
         leader_id: userId,
-        full_name: parsed.data.full_name,
-        email: parsed.data.email,
-        phone: parsed.data.phone || null,
         school: parsed.data.school,
         city: parsed.data.city,
         grade: parsed.data.grade || null,
@@ -117,16 +88,11 @@ function ApplyPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <Field name="school" label="School / college name" required placeholder="Lincoln High" />
             <div className="grid sm:grid-cols-2 gap-5">
-              <Field name="full_name" label="Full name" required placeholder="Ada Lovelace" />
-              <Field name="email" label="Email" type="email" required placeholder="you@school.edu" />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Field name="phone" label="Phone number" type="tel" placeholder="+1 555 555 5555" />
+              <Field name="city" label="City" required placeholder="San Francisco" />
               <Field name="grade" label="Grade / year" placeholder="11th / Sophomore" />
             </div>
-            <Field name="school" label="School / college name" required placeholder="Lincoln High" />
-            <Field name="city" label="City" required placeholder="San Francisco" />
             <Field name="proposed_name" label="Proposed club name" required placeholder="Lincoln Builders Club" />
             <Field
               as="textarea"
@@ -137,17 +103,6 @@ function ApplyPage() {
               placeholder="One paragraph. Be honest."
               className="resize-none"
             />
-            {!user && (
-              <Field
-                name="password"
-                label="Choose a password (for your leader dashboard)"
-                type="password"
-                required
-                minLength={6}
-                placeholder="At least 6 characters"
-              />
-            )}
-            {user && <input type="hidden" name="password" value="already-signed-in" />}
 
             <div className="pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <SubmitBtn type="submit" loading={busy}>Submit application</SubmitBtn>
