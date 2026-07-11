@@ -43,7 +43,14 @@ function CallbackPage() {
         }
 
         if (nextUrl.startsWith("http")) {
-          window.location.href = nextUrl;
+          // Cross-origin redirect (subdomain) — pass tokens via hash so the subdomain
+          // can establish its own Supabase session (localStorage is per-origin)
+          const { data: sessionData } = await supabase.auth.getSession();
+          const sep = nextUrl.includes('#') ? '&' : '#';
+          const tokenHash = sessionData?.session 
+            ? `${sep}access_token=${sessionData.session.access_token}&refresh_token=${sessionData.session.refresh_token}`
+            : '';
+          window.location.href = nextUrl + tokenHash;
         } else {
           nav({ to: nextUrl, replace: true });
         }
@@ -105,7 +112,13 @@ function CallbackPage() {
         }
 
         if (nextUrl.startsWith("http")) {
-          window.location.href = nextUrl;
+          // Cross-origin redirect (subdomain) — pass tokens via hash so the subdomain
+          // can establish its own Supabase session (localStorage is per-origin)
+          const sep = nextUrl.includes('#') ? '&' : '#';
+          const tokenHash = access_token 
+            ? `${sep}access_token=${access_token}&refresh_token=${refresh_token}`
+            : '';
+          window.location.href = nextUrl + tokenHash;
         } else {
           nav({ to: nextUrl, replace: true });
         }

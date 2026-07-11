@@ -3,49 +3,73 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function ClubPublicPortal({ slug }: { slug: string }) {
-  const [step, setStep] = useState<"enter_code" | "confirm" | "processing" | "success">("enter_code");
+  const [step, setStep] = useState<"loading" | "enter_code" | "confirm" | "processing" | "success">("loading");
   const [code, setCode] = useState("");
   const [club, setClub] = useState<{ id: string; proposed_name: string; school: string } | null>(null);
 
-  // Auto-fill code from URL query param (?code=XXXXXX) — makes share links work
+  // On mount: check for tokens in the URL hash (from auth redirect), establish session,
+  // then auto-fill code from ?code= query param, then check for pending join
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlCode = params.get("code");
-    if (urlCode) setCode(urlCode.toUpperCase());
-  }, []);
+    async function init() {
+      // 1. Check for session tokens in the URL hash (passed from callback redirect)
+      const hash = window.location.hash.substring(1); // remove leading #
+      if (hash) {
+        const hashParams = new URLSearchParams(hash);
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
 
-  // If user lands here after auth redirect, complete the join automatically
-  useEffect(() => {
-    async function checkPendingJoin() {
-      const pending = localStorage.getItem("pending_club_join");
-      if (!pending) return;
-      try {
-        const parsed = JSON.parse(pending);
-        if (parsed.slug !== slug) return;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        setStep("processing");
-        setClub(parsed.club);
-
-        const { error } = await supabase
-          .from("club_members")
-          .insert({ club_id: parsed.club.id, user_id: session.user.id });
-
-        localStorage.removeItem("pending_club_join");
-
-        if (error && error.code !== "23505") {
-          toast.error("Failed to join: " + error.message);
-          setStep("enter_code");
-        } else {
-          setStep("success");
+        if (accessToken && refreshToken) {
+          // Establish Supabase session on THIS subdomain's localStorage
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          // Clean the hash from URL so tokens aren't visible
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
         }
-      } catch {
-        localStorage.removeItem("pending_club_join");
       }
+
+      // 2. Auto-fill code from URL query param (?code=XXXXXX)
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get("code");
+      if (urlCode) setCode(urlCode.toUpperCase());
+
+      // 3. Check if we have a pending join from before the auth redirect
+      const pending = localStorage.getItem("pending_club_join");
+      if (pending) {
+        try {
+          const parsed = JSON.parse(pending);
+          if (parsed.slug === slug) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              setStep("processing");
+              setClub(parsed.club);
+
+              const { error } = await supabase
+                .from("club_members")
+                .insert({ club_id: parsed.club.id, user_id: session.user.id });
+
+              localStorage.removeItem("pending_club_join");
+
+              if (error && error.code !== "23505") {
+                toast.error("Failed to join: " + error.message);
+                setStep("enter_code");
+              } else {
+                setStep("success");
+              }
+              return;
+            }
+          }
+        } catch {
+          localStorage.removeItem("pending_club_join");
+        }
+      }
+
+      // No pending join — show the code entry form
+      setStep("enter_code");
     }
-    checkPendingJoin();
+
+    init();
   }, [slug]);
 
   async function handleVerifyCode(e: React.FormEvent) {
@@ -81,7 +105,7 @@ export function ClubPublicPortal({ slug }: { slug: string }) {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      // Save intent, redirect to auth, then come back here
+      // Save intent, redirect to auth on root domain, then come back here
       localStorage.setItem("pending_club_join", JSON.stringify({ slug, club }));
       const isLocal = window.location.hostname.includes("localhost");
       const authUrl = isLocal ? "http://localhost:5173/auth" : "https://clubs.zuup.dev/auth";
@@ -89,12 +113,12 @@ export function ClubPublicPortal({ slug }: { slug: string }) {
       return;
     }
 
-    // Logged in — insert into club_members for THIS club only
+    // User is logged in — insert into club_members
     const { error } = await supabase
       .from("club_members")
       .insert({ club_id: club.id, user_id: session.user.id });
 
-    if (error && error.code !== "23505") { // 23505 = already a member, that's fine
+    if (error && error.code !== "23505") { // 23505 = already a member
       toast.error("Failed to join: " + error.message);
       setStep("confirm");
       return;
@@ -120,6 +144,13 @@ export function ClubPublicPortal({ slug }: { slug: string }) {
         </p>
 
         <div className="bg-surface border border-border p-8 rounded-3xl mt-8 w-full max-w-md shadow-2xl">
+
+          {step === "loading" && (
+            <div className="flex flex-col items-center justify-center py-8 animate-in fade-in duration-300">
+              <div className="w-10 h-10 border-4 border-zuup-pink border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-muted-foreground font-medium">Loading...</p>
+            </div>
+          )}
 
           {step === "enter_code" && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
