@@ -21,8 +21,6 @@ type ClubRow = {
   teacher_name: string | null;
   admin_notes: string | null;
   created_at: string;
-  full_name: string;
-  email: string;
 };
 
 function AdminPage() {
@@ -46,13 +44,16 @@ function AdminPage() {
       setIsAdmin(admin);
       if (!admin) return;
 
-      const [{ data: clubs }, { data: countRows }] = await Promise.all([
+      const [{ data: clubs }, { data: memberRows }] = await Promise.all([
         supabase.from("clubs").select("*").order("created_at", { ascending: false }),
-        supabase.from("club_signup_counts").select("club_id, signups"),
+        supabase.from("club_members").select("club_id"),
       ]);
       setRows((clubs as ClubRow[] | null) ?? []);
       const cmap: Record<string, number> = {};
-      (countRows ?? []).forEach((r) => { cmap[r.club_id as string] = r.signups as number; });
+      (memberRows ?? []).forEach((r) => {
+        const cid = r.club_id as string;
+        cmap[cid] = (cmap[cid] ?? 0) + 1;
+      });
       setCounts(cmap);
     })();
   }, [user]);
@@ -231,7 +232,7 @@ function ManageDialog({ club, count, onClose, onUpdate }: { club: ClubRow; count
           </div>
           <div className="rounded-xl bg-white/[0.03] border border-white/10 p-3">
             <p className="text-[9px] uppercase tracking-[0.18em] text-ink-dim">Leader</p>
-            <p className="text-xs text-ink truncate mt-1.5">{club.full_name}</p>
+            <p className="text-xs text-ink truncate mt-1.5">Club Leader</p>
           </div>
         </div>
 

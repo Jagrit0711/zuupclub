@@ -19,13 +19,10 @@ export type Database = {
           admin_notes: string | null
           city: string
           created_at: string
-          email: string
-          full_name: string
           grade: string | null
           id: string
           join_code: string | null
           leader_id: string
-          phone: string | null
           proposed_name: string
           school: string
           slug: string | null
@@ -39,13 +36,10 @@ export type Database = {
           admin_notes?: string | null
           city: string
           created_at?: string
-          email: string
-          full_name: string
           grade?: string | null
           id?: string
           join_code?: string | null
           leader_id: string
-          phone?: string | null
           proposed_name: string
           school: string
           slug?: string | null
@@ -59,13 +53,10 @@ export type Database = {
           admin_notes?: string | null
           city?: string
           created_at?: string
-          email?: string
-          full_name?: string
           grade?: string | null
           id?: string
           join_code?: string | null
           leader_id?: string
-          phone?: string | null
           proposed_name?: string
           school?: string
           slug?: string | null
@@ -119,34 +110,31 @@ export type Database = {
         }
         Relationships: []
       }
-      waitlist_signups: {
+      club_members: {
         Row: {
-          club_id: string
-          created_at: string
-          email: string
-          full_name: string
           id: string
-          school: string
+          club_id: string
+          user_id: string
+          role: string
+          joined_at: string
         }
         Insert: {
-          club_id: string
-          created_at?: string
-          email: string
-          full_name: string
           id?: string
-          school: string
+          club_id: string
+          user_id: string
+          role?: string
+          joined_at?: string
         }
         Update: {
-          club_id?: string
-          created_at?: string
-          email?: string
-          full_name?: string
           id?: string
-          school?: string
+          club_id?: string
+          user_id?: string
+          role?: string
+          joined_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "waitlist_signups_club_id_fkey"
+            foreignKeyName: "club_members_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
@@ -156,21 +144,7 @@ export type Database = {
       }
     }
     Views: {
-      club_signup_counts: {
-        Row: {
-          club_id: string | null
-          signups: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "waitlist_signups_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {

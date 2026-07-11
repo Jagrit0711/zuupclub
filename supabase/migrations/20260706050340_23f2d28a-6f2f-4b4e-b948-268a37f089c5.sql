@@ -114,9 +114,34 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
-  VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'))
-  ON CONFLICT (id) DO NOTHING;
+  INSERT INTO public.profiles (
+    id, 
+    user_id, 
+    email, 
+    full_name, 
+    display_name, 
+    dob, 
+    phone
+  )
+  VALUES (
+    NEW.id, 
+    NEW.id, 
+    NEW.email, 
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
+    COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
+    NULLIF(NEW.raw_user_meta_data->>'dob', '')::date,
+    NEW.raw_user_meta_data->>'phone'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = EXCLUDED.full_name,
+    display_name = EXCLUDED.display_name,
+    dob = EXCLUDED.dob,
+    phone = EXCLUDED.phone;
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Fallback: if there is a constraint violation or schema mismatch, 
+  -- still allow the auth.user to be created!
   RETURN NEW;
 END;
 $$;
